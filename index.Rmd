@@ -35,13 +35,15 @@ good_names_for_chinese <- unique_babynames[tolower(unique_babynames) %in% first_
 chinese_boys <- babynames %>%
   filter(name %in% good_names_for_chinese & sex == "M") %>%
   mutate(year = factor(year, 1880:2017)) %>%
+  arrange(name) %>%
   select(-sex, -prop) %>%
   spread(year, n, fill = 0) %>%
   gather(year, n, -name) %>%
   group_nest(name) %>%
-  mutate(data = map(data, ~spk_chr(.x$n))) %>%
-  unnest()
-
+  mutate(n = map(data, ~sum(.x$n)),
+         data = map(data, ~spk_chr(.x$n))) %>%
+  unnest() %>%
+  arrange(desc(n))
 
 library(kableExtra)
 kable(chinese_boys, escape = F) %>%
