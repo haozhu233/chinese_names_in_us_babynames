@@ -1,0 +1,49 @@
+---
+title: "Chinese names in US Babynames"
+author: "Hao"
+date: "4/18/2019"
+output: html_document
+---
+
+```{r, message=F, warning=F}
+library(babynames)
+library(tidyverse)
+library(sparkline)
+knitr::opts_chunk$set(message = F, warning = F)
+```
+
+```{r}
+sparkline(0)
+```
+
+```{r}
+pinyin <- read_lines("pinyin.txt") %>%
+  str_remove_all("'")
+
+one_word <- pinyin
+two_words <- combn(pinyin, 2) %>%
+  apply(2, paste0, collapse = "")
+
+first_names <- c(one_word, two_words)
+
+unique_babynames <- unique(babynames$name)
+good_names_for_chinese <- unique_babynames[tolower(unique_babynames) %in% first_names]
+```
+
+# For Boys
+```{r}
+chinese_boys <- babynames %>%
+  filter(name %in% good_names_for_chinese & sex == "M") %>%
+  mutate(year = factor(year, 1880:2017)) %>%
+  select(-sex, -prop) %>%
+  spread(year, n, fill = 0) %>%
+  gather(year, n, -name) %>%
+  group_nest(name) %>%
+  mutate(data = map(data, ~spk_chr(.x$n))) %>%
+  unnest()
+
+
+library(kableExtra)
+kable(chinese_boys, escape = F) %>%
+  kable_styling(full_width = F) 
+```
