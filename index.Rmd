@@ -17,23 +17,33 @@ sparkline(0)
 ```
 
 ```{r}
-pinyin <- read_lines("pinyin.txt") %>%
-  str_remove_all("'")
+sample_hanzi <- read_csv("sample_hanzi.csv")
 
-one_word <- pinyin
-two_words <- combn(pinyin, 2) %>%
+pinyin_1_word <- sample_hanzi$pinyin
+pinyin_2_words <- combn(sample_hanzi$pinyin, 2) %>%
   apply(2, paste0, collapse = "")
+pinyin_first_names <- c(pinyin_1_word, pinyin_2_words)
 
-first_names <- c(one_word, two_words)
+hanzi_1_word <- sample_hanzi$hanzi
+hanzi_2_words <- combn(sample_hanzi$hanzi, 2) %>%
+  apply(2, paste0, collapse = "")
+hanzi_first_names <- c(hanzi_1_word, hanzi_2_words)
 
-unique_babynames <- unique(babynames$name)
-good_names_for_chinese <- unique_babynames[tolower(unique_babynames) %in% first_names]
+first_names <- tibble(
+  pinyin = pinyin_first_names,
+  hanzi = hanzi_first_names
+)
+chinese_babynames <- babynames %>%
+  mutate(lowername = tolower(name)) %>%
+  inner_join(first_names, by = c("lowername" = "pinyin")) %>%
+  mutate(name = paste(name, hanzi, sep = " - ")) %>%
+  select(-lowername, -hanzi)
 ```
 
 # For Boys
 ```{r}
-chinese_boys <- babynames %>%
-  filter(name %in% good_names_for_chinese & sex == "M") %>%
+chinese_boys <- chinese_babynames %>%
+  filter(sex == "M") %>%
   mutate(year = factor(year, 1880:2017)) %>%
   arrange(name) %>%
   select(-sex, -prop) %>%
