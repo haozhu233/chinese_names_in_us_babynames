@@ -5,6 +5,13 @@ date: "4/18/2019"
 output: html_document
 ---
 
+(This is a long over-due blog post. )
+
+When my wife and I were trying give our kiddo a name a few month ago, we held such belief: we should give him a Chinese name to repect our culture but this name should be pronounceable in America. As a data guy, I tried to solve it in the "data way". Basically, in this post, I'm trying to find out all "Chinese names" hidden inside the US babyname dataset from the `babynames` package. 
+
+I would say most of the names listed here are not usable but you can get quite a few good hints, such as "Kai", "Manning", "Mei", etc.. I hope it can be helpful for other Chinese parents in English environment. 
+
+
 ```{r, message=F, warning=F}
 library(babynames)
 library(tidyverse)
@@ -53,9 +60,29 @@ chinese_boys <- chinese_babynames %>%
   mutate(n = map(data, ~sum(.x$n)),
          data = map(data, ~spk_chr(.x$n))) %>%
   unnest() %>%
-  arrange(desc(n))
+  arrange(desc(n)) %>%
+  slice(1:200)
 
 library(kableExtra)
-kable(chinese_boys, escape = F) %>%
+kable(chinese_boys, escape = F, caption = "Boy names") %>%
+  kable_styling(full_width = F) 
+```
+
+```{r}
+chinese_girls <- chinese_babynames %>%
+  filter(sex == "F") %>%
+  mutate(year = factor(year, 1880:2017)) %>%
+  arrange(name) %>%
+  select(-sex, -prop) %>%
+  spread(year, n, fill = 0) %>%
+  gather(year, n, -name) %>%
+  group_nest(name) %>%
+  mutate(n = map(data, ~sum(.x$n)),
+         data = map(data, ~spk_chr(.x$n))) %>%
+  unnest() %>%
+  arrange(desc(n)) %>%
+  slice(1:300)
+
+kable(chinese_girls, escape = F, caption = "Girl Names") %>%
   kable_styling(full_width = F) 
 ```
